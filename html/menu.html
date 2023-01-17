@@ -1,0 +1,78 @@
+<div id="head">
+    <link rel="stylesheet" href="styles/menu.css">
+    <script src="scripts/menu.js" defer></script>
+</div>
+<div id="content">
+    <div class="Background"></div>
+    <div class="PageOverlay" data-visible="false"></div>
+    <div class="Container">
+        <div class="Logo">
+            <div class="Logo--Title">Moorhahn</div>
+            <div class="Logo--Sub">JS</div>
+            <div class="Logo--Version">v0.0</div>
+        </div>
+    </div>
+    <div class="Container">
+        <div class="Menu">
+            <div class="Menu__Row">
+                <button class="Menu__Link" data-action="open-popup" data-control="options" data-t="play"></button>
+            </div>
+            <div class="Menu__Row">
+                <a class="Menu__Link" data-href="highscores" data-t="highscores"></a>
+            </div>
+            <div class="Menu__Row">
+                <button class="Menu__Link" data-action="open-popup" data-control="settings" data-t="settings"></button>
+            </div>
+        </div>
+    </div>
+    <div id="popups">
+        <div class="Popup" data-visible="false" data-popup="options">
+            <div class="Popup__Header">
+                <div class="Popup__Header--Title"><span data-t="gameSettings"></span></div>
+                <button class="Popup__Header--Close" data-action="close-popup">X</button>
+            </div>
+            <hr>
+            <div class="Popup__Content">
+                <div class="Options__Header" data-t="difficulty"></div>
+                <div class="Options__Row">
+                    <button class="Option" data-t="easy" data-action="set-difficulty" data-value="easy"></button>
+                    <button class="Option" data-t="normal" data-action="set-difficulty" data-value="normal"></button>
+                    <button class="Option" data-t="hard" data-action="set-difficulty" data-value="hard"></button>
+                    <button class="Option" data-t="pro" data-action="set-difficulty" data-value="pro"></button>
+                </div>
+                <div class="Options__Header" data-t="gameMode"></div>
+                <div class="Options__Row">
+                    <button class="Option" data-t="classic" data-action="set-gamemode" data-value="classic"></button>
+                    <button class="Option " data-t="deluxe" data-action="set-gamemode" data-value="deluxe"></button>
+                </div>
+                <div class="Options__Row">
+                    <a class="Button__Primary" data-t="play" data-href="game"></a>
+                </div>
+            </div>
+        </div>
+        <div class="Popup" data-visible="false" data-popup="settings">
+            <div class="Popup__Header">
+                <div class="Popup__Header--Title"><span data-t="settings"></span></div>
+                <button class="Popup__Header--Close" data-action="close-popup">X</button>
+            </div>
+            <hr>
+            <div class="Popup__Content">
+                <div class="Options__Row">
+                    <div data-t="sounds"></div>
+                    <button data-action="toggle-sound" data-sounds="on"></button>
+                </div>
+                <div class="Options__Row">
+                    <div data-t="fullscreen"></div>
+                    <button data-action="toggle-fullscreen" data-fullscreen="false"></button>
+                </div>
+                <div class="Options__Row">
+                    <div data-t="language"></div>
+                    <select name="language">
+                        <option value="DE">DE</option>
+                        <option value="EN">EN</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
