@@ -5,7 +5,8 @@ class MoorhahnStorage {
       fullscreen: 'fullscreen',
       language: 'language',
       gamemode: 'gamemode',
-      difficulty: 'difficulty'
+      difficulty: 'difficulty',
+      name: 'name'
     }
     this.defaults = {
       sounds: 'on',

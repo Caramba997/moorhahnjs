@@ -69,9 +69,11 @@ export class Game {
       this.crosshair.y = position.y;
     });
     // Shoot
+    const reloadButton = document.querySelector('.Reload');
     canvas.addEventListener('click', (e) => {
       if (this.ammo === 0) this.sounds.play('shotgun-empty');
       if (this.ammo === 0 || this.reloading) return;
+      reloadButton.disabled = false;
       this.ammo--;
       this.sounds.play('shotgun');
       const position = getCursorPosition(e);
@@ -116,7 +118,15 @@ export class Game {
         if (!this.reloading && this.ammo < VALUES.ammo) {
           this.reloading = true;
           this.reloadStart = this.time;
+          reloadButton.disabled = true;
         }
+      }
+    });
+    reloadButton.addEventListener('click', (e) => {
+      if (!this.reloading && this.ammo < VALUES.ammo) {
+        this.reloading = true;
+        this.reloadStart = this.time;
+        reloadButton.disabled = true;
       }
     });
   }
@@ -180,6 +190,30 @@ export class Game {
         window.pwa.toggleFullscreen(true);
       }
     });
+    // Save highscore
+    const saveButton = document.querySelector('[data-action="save-highscore"]'),
+          nameInput = document.querySelector('input[name="name"]'),
+          resultElement = document.querySelector('[data-result="save"]');
+    const saveHighscore = () => {
+      if (!nameInput.value) return;
+      window.ps.save('name', nameInput.value);
+      saveButton.classList.add('loading');
+      window.api.post('setHighscore', { difficulty: this.difficulty, gamemode: this.gamemode, points: this.points, username: nameInput.value }, (result) => {
+        resultElement.innerText = window.locales.getTranslation('saveSuccess');
+        saveButton.classList.remove('loading');
+        saveButton.disabled = true;
+        nameInput.disabled = true;
+      }, (error) => {
+        console.error(error);
+        resultElement.innerText = window.locales.getTranslation('saveError');
+        saveButton.classList.remove('loading');
+      });
+    };
+    saveButton.addEventListener('click', saveHighscore);
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter') saveHighscore();
+    });
+    if (window.ps.load('name')) nameInput.value = window.ps.load('name');
   }
 
   openPopup(name) {
@@ -349,6 +383,18 @@ export class Game {
     this.render();
     document.querySelector('[data-result="points"]').innerText = this.points;
     this.openPopup('game-over');
+    const saveButton = document.querySelector('[data-action="save-highscore"]'),
+          nameInput = document.querySelector('input[name="name"]'),
+          resultElement = document.querySelector('[data-result="save"]');
+    resultElement.innerText = '';
+    if (this.points > 0) {
+      nameInput.disabled = false;
+      saveButton.disabled = false;
+    }
+    else {
+      nameInput.disabled = true;
+      saveButton.disabled = true;
+    }
     this.sounds.stop(this.music);
   }
 

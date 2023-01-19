@@ -1,10 +1,10 @@
 class API {
   constructor() {
-    this.url = 'http://localhost:3000';
-    this.version = 'v0.0';
+    this.url = 'https://fc-moorhahn.herokuapp.com'; //'http://localhost:3000'
+    this.version = 'v1.0';
     this.routes = {
       getHighscores: '/api/highscores',
-      setHighscore: '/api/highscores'
+      setHighscore: '/api/highscore'
     };
   }
 

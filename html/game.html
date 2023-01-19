@@ -24,6 +24,7 @@
             <div class="Actions">
                 <button class="Action__Link Action__Link--Pause" data-action="open-popup" data-control="start"></button>
             </div>
+            <button class="Reload" disabled data-action="reload" data-t="reload"></button>
         </div>
     </div>
     <div id="popups">
@@ -36,6 +37,7 @@
             </div>
             <hr>
             <div class="Popup__Content">
+                <p class="ReloadHint" data-t="reloadHint"></p>
                 <br>
                 <button data-action="toggle-fullscreen" data-fullscreen="off"></button>
                 <br>
@@ -52,6 +54,12 @@
             <div class="Popup__Content">
                 <p data-t="levelCompleteText"></p>
                 <p><span data-t="points"></span>: <span data-result="points"></span></p>
+                <div class="Container">
+                    <input class="mr-1" type="text" name="name" maxlength="12" placeholder="Name">
+                    <button class="Button__Primary" data-t="save" data-action="save-highscore"></button>
+                </div>
+                <div class="mt-1" data-result="save"></div>
+                <br>
                 <a class="Button__Primary" data-href="menu" data-t="backToStart"></a>
                 <p data-t="or"></p>
                 <button class="Button__Primary" data-action="replay" data-t="replay"></button>

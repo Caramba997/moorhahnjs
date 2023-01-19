@@ -2,7 +2,7 @@
   let highscores;
 
   function showHighscores() {
-    const mode = document.querySelector('select[name="mode"]').value,
+    const gamemode = document.querySelector('select[name="gamemode"]').value,
           difficulty = document.querySelector('select[name="difficulty"]').value,
           table = document.querySelector('#highscores');
 
@@ -10,14 +10,12 @@
       score.remove();
     });
 
-    if (level === 'none') return;
-
     for (let i = 0; i < highscores.length; i++) {
-      if (highscores[i].mode === mode) {
-        const scores = highscores[i][difficulty];
+      if (highscores[i].gamemode === gamemode && highscores[i].difficulty === difficulty) {
+        const scores = highscores[i].scores;
         for (let k = 0; k < scores.length; k++) {
           const score = `${scores[k].score} ${window.locales.getTranslation('points')}`;
-          table.innerHTML += `<tr class="Score"><td>${k+1}</td><td>${scores[k].user}</td><td>${score}</td></tr>`;
+          table.innerHTML += `<tr class="Score"><td>${k+1}</td><td>${scores[k].username}</td><td>${score}</td></tr>`;
         }
         break;
       }
@@ -26,11 +24,13 @@
 
   window.api.get('getHighscores', (result) => {
     highscores = result;
+    showHighscores();
+    window.dispatchEvent(new CustomEvent('progress:executed'));
   }, (error) => {
     console.error(error);
     window.dispatchEvent(new CustomEvent('progress:executed'));
   });
-  const modeSelector = document.querySelector('select[name="mode"]'),
+  const modeSelector = document.querySelector('select[name="gamemode"]'),
         difficultySelector = document.querySelector('select[name="difficulty"]');
   modeSelector.addEventListener('change', showHighscores);
   difficultySelector.addEventListener('change', showHighscores);

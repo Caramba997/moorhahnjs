@@ -28,11 +28,17 @@ body {
     position: absolute;
     right: -20px;
     bottom: -5px;
-    transform: rotate(-10deg);
+    transform: rotate(-15deg);
     color: rgb(175, 16, 16);
     font-size: 3rem;
     font-weight: bold;
     text-shadow: 0 0 10px black;
+    animation: 3s linear infinite js_animation;
+}
+@keyframes js_animation {
+    0% { transform: rotate(-15deg); }
+    50% { transform: rotate(-5deg); }
+    100% { transform: rotate(-15deg); }
 }
 .Logo--Version {
     position: absolute;

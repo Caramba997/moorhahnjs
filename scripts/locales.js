@@ -58,8 +58,14 @@ const locales = {
     classic: 'Klassisch',
     deluxe: 'Deluxe',
     fullscreen: 'Vollbild',
-    levelCompleteText: 'Die Zeit ist um.',
-    or: 'oder'
+    levelCompleteText: 'Die Zeit ist um. Gib deinen Namen ein um deinen Score in der Bestenliste zu speichern.',
+    or: 'oder',
+    name: 'Name',
+    save: 'Speichern',
+    saveSuccess: 'Speichern erfolgreich',
+    saveError: 'Speichern fehlgeschlagen',
+    reload: 'Nachladen',
+    reloadHint: 'Hinweis: Nachladen mit Leertaste.'
   },
   EN: {
     undefined: '???',
@@ -120,8 +126,14 @@ const locales = {
     classic: 'Classic',
     deluxe: 'Deluxe',
     fullscreen: 'Fullscreen',
-    levelCompleteText: 'Time is up.',
-    or: 'or'
+    levelCompleteText: 'Time is up. Enter your name to save your score.',
+    or: 'or',
+    name: 'Name',
+    save: 'Save',
+    saveSuccess: 'Successfully saved',
+    saveError: 'Score could not be saved',
+    reload: 'Reload',
+    reloadHint: 'Hint: Press space to reload.'
   }
 }
 
