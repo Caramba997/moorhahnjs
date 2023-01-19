@@ -1,5 +1,5 @@
 import { VALUES } from './values.js';
-import { EggCock, GhostCock, Level2, Level4, Level6, Level8, Parabola, RaceCock, Sinus, StandardCock, Teleportation, TeleporterCock, Trajectory } from './classes.js';
+import { Cock, DeadCock, EggCock, GhostCock, Level2, Level4, Level6, Level8, Parabola, RaceCock, ShotPoint, Sinus, StandardCock, Teleportation, TeleporterCock, Trajectory } from './classes.js';
 import { Graphics } from './graphics.js';
 import { Sounds } from './sounds.js';
 
@@ -68,13 +68,49 @@ export class Game {
       this.crosshair.x = position.x;
       this.crosshair.y = position.y;
     });
+    // Shoot
     canvas.addEventListener('click', (e) => {
       if (this.ammo === 0) this.sounds.play('shotgun-empty');
       if (this.ammo === 0 || this.reloading) return;
       this.ammo--;
       this.sounds.play('shotgun');
       const position = getCursorPosition(e);
+      let finished = false;
+      Object.entries(this.levels).forEach(([key, entries]) => {
+        if (finished) return;
+        const level = parseInt(key);
+        if (level === 8) {
+          finished = true;
+          return;
+        }
+        if (level % 2 === 0) {
+          entries.forEach((sceneElement) => {
+            if (finished) return;
+            if (this.checkHit(position, sceneElement)) {
+              finished = true;
+            }
+          });
+        }
+        else {
+          const shotPoints = [];
+          entries.forEach((cock) => {
+            if (!(cock instanceof Cock)) return;
+            if (cock.dead) return;
+            if (this.checkHit(position, cock)) {
+              cock.hit();
+              if (cock.dead) {
+                this.points += cock.points;
+                shotPoints.push(new ShotPoint(position.x, position.y, cock.points));
+              }
+            }
+          });
+          shotPoints.forEach((shot) => {
+            entries.push(shot);
+          });
+        }
+      });
     });
+    // Reload
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         if (!this.reloading && this.ammo < VALUES.ammo) {
@@ -172,11 +208,66 @@ export class Game {
     if (this.reloading) this.reload();
     if (this.spawns.length > 0) {
       if (this.spawns[0] > this.time) {
-        const cock = this.randomizer.createCock(this.gamemode);
+        const cock = this.randomizer.createCock(this.gamemode, this.difficulty);
         this.levels[cock.layer].push(cock);
         this.spawns.splice(0, 1);
       }
     }
+    [1, 3, 5, 7].forEach((level) => {
+      this.levels[level].forEach((cock) => {
+        cock.move(this.deltaTime);
+      });
+    });
+  }
+
+  checkHit(point, prop) {
+    const convertHitbox = (hitbox, width, height) => {
+      const result = [];
+      hitbox.forEach((entry) => {
+        result.push([prop.x + (prop.forward === false ? width - 1 - entry[0] : entry[0]) * prop.width / width, prop.y + entry[1] * prop.height / height]);
+      });
+      return result;
+    };
+    const h = convertHitbox(prop.hitbox, prop.hitboxSize.width, prop.hitboxSize.height);
+    let hits = 0;
+    // Checking rays going from the point to the right
+    if (prop.forward === false) {
+      for (let i = h.length - 1; i >= 0; i--) {
+        const p1 = h[i],
+              p2 = i === 0 ? h[h.length - 1] : h[i - 1];
+        if ((point.y > p1[1] && point.y > p2[1]) || (point.y < p1[1] && point.y < p2[1])) continue;
+        if (p1[0] === p2[0]) {
+          if (point.x < p1[0]) hits++;
+        }
+        else {
+          const m = (p2[1] - p1[1]) / (p2[0] - p1[0]),
+                y0 = p1[1] - m * p1[0],
+                fy = (y) => {
+                  return (y - y0) / m;
+                };
+          if (fy(point.y) > point.x) hits++;
+        }
+      }
+    }
+    else {
+      for (let i = 0; i < h.length; i++) {
+        const p1 = h[i],
+              p2 = i === h.length - 1 ? h[0] : h[i + 1];
+        if ((point.y > p1[1] && point.y > p2[1]) || (point.y < p1[1] && point.y < p2[1])) continue;
+        if (p1[0] === p2[0]) {
+          if (point.x < p1[0]) hits++;
+        }
+        else {
+          const m = (p2[1] - p1[1]) / (p2[0] - p1[0]),
+                y0 = p1[1] - m * p1[0],
+                fy = (y) => {
+                  return (y - y0) / m;
+                };
+          if (fy(point.y) > point.x) hits++;
+        }
+      }
+    }
+    return hits % 2 === 1;
   }
 
   render() {
@@ -184,7 +275,12 @@ export class Game {
     graphics.clear();
     [8,7,6,5,4,3,2,1].forEach((level) => {
       this.levels[level].forEach((element) => {
-        graphics.draw(element);
+        if (element.text) {
+          graphics.write(element);
+        }
+        else {
+          graphics.draw(element);
+        }
       })
     });
     for (let i = 0; i < this.ammo; i++) {
@@ -219,7 +315,34 @@ export class Game {
   }
 
   garbageCollection() {
-
+    Object.entries(this.levels).forEach(([key, cocks]) => {
+      if (parseInt(key) % 2 === 0) return;
+      const newCocks = [];
+      cocks.forEach((cock) => {
+        if (cock.text) {
+          if (cock.alpha === 0) cock.remove = true;
+        }
+        if (!cock.dead && ((cock.forward && cock.x > VALUES.view.width) || (!cock.forward && cock.x < -250))) {
+          cock.remove = true;
+        }
+        else if (cock.dead && cock.type !== 'cock-dead') {
+          cock.remove = true;
+          newCocks.push(new DeadCock(cock));
+        }
+        else if (cock.type === 'cock-dead' && cock.y < -200) {
+          cock.remove = true;
+        }
+      });
+      for (let i = cocks.length - 1; i >= 0; i--) {
+        const cock = cocks[i];
+        if (cock.remove) {
+          cocks.splice(i, 1);
+        }
+      }
+      newCocks.forEach((cock) => {
+        cocks.splice(0, 0, cock);
+      });
+    });
   }
 
   gameOver() {
@@ -244,6 +367,7 @@ export class Game {
     this.render();
     this.stats.setFps(this.deltaTime);
     this.stats.setTime(this.time);
+    this.stats.setPoints(this.points);
     window.requestAnimationFrame(this.loop.bind(this));
   }
 }
@@ -274,7 +398,7 @@ class Stats {
 }
 
 class Randomizer {
-  createCock(mode) {
+  createCock(mode, difficulty) {
     const cockRand = Math.random() * 100;
     let cock;
     if (mode === 'classic' || cockRand < 50) {
@@ -294,9 +418,11 @@ class Randomizer {
     }
     const layers = [1, 3, 5, 7],
           layer = layers[Math.floor(Math.random() * layers.length)],
-          direction = (Math.random() * 2 < 1) ? 0 : 1,
+          forward = Math.random() * 2 >= 1,
           startY = Math.round(Math.random() * 825) + 75,
-          speedFactor = 1 + (Math.random() / 2) - 0.25,
+          difficultySpeedFactor = difficulty === 'easy' ? 1 : difficulty === 'normal' ? 2 : difficulty === 'hard' ? 3 : 4,
+          layerSpeedFactor = layer === 1 ? 2 : layer === 3 ? 1.7 : layer === 5 ? 1.3 : 1,
+          speedFactor = (1 + (Math.random() / 2) - 0.25) * difficultySpeedFactor * layerSpeedFactor,
           trajectoryName = cock.trajectories[Math.floor(Math.random() * cock.trajectories.length)];
     let trajectory;
     switch (trajectoryName) {
@@ -308,8 +434,8 @@ class Randomizer {
         trajectory = new Sinus(startY, Math.random() * 100, Math.random() / 50, Math.random() * 10);
         break;
       }
-      case 'teleporation': {
-        trajectory = new Teleportation(startY, (direction === 0) ? -200 : VALUES.view.width, layer);
+      case 'teleportation': {
+        trajectory = new Teleportation(startY, forward ? -200 : VALUES.view.width, layer, forward);
         break;
       }
       default: {
@@ -317,27 +443,27 @@ class Randomizer {
       }
     }
     if (cock === VALUES.cocks.standard) {
-      return new StandardCock(trajectory, direction, layer, speedFactor);
+      return new StandardCock(trajectory, forward, layer, speedFactor);
     }
     else if (cock === VALUES.cocks.egg) {
-      return new EggCock(trajectory, direction, layer, speedFactor);
+      return new EggCock(trajectory, forward, layer, speedFactor);
     }
     else if (cock === VALUES.cocks.teleporter) {
-      return new TeleporterCock(trajectory, direction, layer, speedFactor);
+      return new TeleporterCock(trajectory, forward, layer, speedFactor);
     }
     else if (cock === VALUES.cocks.ghost) {
-      return new GhostCock(trajectory, direction, layer, speedFactor);
+      return new GhostCock(trajectory, forward, layer, speedFactor);
     }
     else if (cock === VALUES.cocks.race) {
-      return new RaceCock(trajectory, direction, layer, speedFactor);
+      return new RaceCock(trajectory, forward, layer, speedFactor);
     }
     else {
-      return new StandardCock(trajectory, direction, layer, speedFactor);
+      return new StandardCock(trajectory, forward, layer, speedFactor);
     }
   }
 
   createSpawnTimes(difficulty) {
-    const count = difficulty === 'easy' ? 50 : difficulty === 'normal' ? 70 : difficulty === 'hard' ? 90 : 110;
+    const count = difficulty === 'easy' ? 40 : difficulty === 'normal' ? 65 : difficulty === 'hard' ? 90 : 110;
     const result = [];
     for (let i = 0; i < count; i++) {
       result[i] = Math.round(Math.random() * (VALUES.time - 5000)) + 5000;

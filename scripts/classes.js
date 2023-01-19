@@ -1,31 +1,50 @@
 import { VALUES } from './values.js';
 
 export class Cock {
-  constructor(trajectory, direction, layer, speed, points, type, hits) {
+  constructor(trajectory, forward, layer, speed, points, type, hits, hitbox, hitboxSize) {
     this.trajectory = trajectory;
+    this.forward = forward;
     this.layer = layer;
     this.size = VALUES.cockSizes[this.layer];
-    this.x = (direction === 0) ? -200 : VALUES.view.width;
+    this.x = forward ? -250 : VALUES.view.width;
     const position = trajectory.getPosition(this.x);
     this.x = position.x;
     this.y = position.y;
     this.width = this.size * VALUES.cockSize * VALUES.cockWidth;
     this.height = this.size * VALUES.cockSize * VALUES.cockHeight;
-    this.direction = direction;
-    this.forward = direction === 1;
     this.speed = speed; //Pixels per second
     this.dead = false;
     this.animation = 0;
+    this.animationCount = 1;
+    this.animationForward = true;
     this.points = points;
     this.type = type;
     this.hits = hits;
+    this.hitbox = hitbox;
+    this.hitboxSize = hitboxSize;
   }
 
   move(deltaTime) {
-    this.x += deltaTime / 1000 * this.speed;
-    const position = trajectory.getPosition(this.x);
+    this.x += (this.forward === false ? -1 : 1) * deltaTime / 1000 * this.speed;
+    const position = this.trajectory.getPosition(this.x);
     this.x = position.x;
     this.y = position.y;
+    if (this.animationCount > 1) {
+      if (this.animationForward) {
+        this.animation += deltaTime / VALUES.animationSpeed * this.speed;
+        if (this.animation > this.animationCount - 1) {
+          this.animation = this.animationCount - 1 - (this.animation - (this.animationCount - 1));
+          this.animationForward = false;
+        }
+      }
+      else {
+        this.animation -= deltaTime / VALUES.animationSpeed * this.speed;
+        if (this.animation < 0) {
+          this.animation = Math.abs(this.animation);
+          this.animationForward = true;
+        }
+      }
+    }
   }
 
   hit() {
@@ -34,17 +53,30 @@ export class Cock {
   }
 }
 
+export class DeadCock extends Cock {
+  constructor(cock) {
+    const layer = cock.layer;
+    super(cock.trajectory, cock.forward, cock.layer, VALUES.cockSpeed * (layer === 1 ? 2 : layer === 3 ? 1.5 : layer === 5 ? 1 : 0.5), 0, 'cock-dead', 0, null, null);
+    this.dead = true;
+    this.x = cock.x;
+    this.y = cock.y;
+    this.trajectory = new Fall(cock.y, cock.x);
+  }
+}
+
 export class StandardCock extends Cock {
-  constructor(trajectory, direction, layer, speedFactor) {
+  constructor(trajectory, forward, layer, speedFactor) {
     const defaults = VALUES.cocks.standard;
-    super(trajectory, direction, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits);
+    super(trajectory, forward, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits, defaults.hitbox, defaults.hitboxSize);
+    this.animationCount = 11;
   }
 }
 
 export class EggCock extends Cock {
-  constructor(trajectory, direction, layer, speedFactor) {
+  constructor(trajectory, forward, layer, speedFactor) {
     const defaults = VALUES.cocks.egg;
-    super(trajectory, direction, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits);
+    super(trajectory, forward, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits, defaults.hitbox, defaults.hitboxSize);
+    this.animationCount = 11;
   }
 
   hit() {
@@ -59,23 +91,24 @@ export class EggCock extends Cock {
 }
 
 export class GhostCock extends Cock {
-  constructor(trajectory, direction, layer, speedFactor) {
+  constructor(trajectory, forward, layer, speedFactor) {
     const defaults = VALUES.cocks.ghost;
-    super(trajectory, direction, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits);
+    super(trajectory, forward, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits, defaults.hitbox, defaults.hitboxSize);
+    this.animationCount = 11;
   }
 }
 
 export class RaceCock extends Cock {
-  constructor(trajectory, direction, layer, speedFactor) {
+  constructor(trajectory, forward, layer, speedFactor) {
     const defaults = VALUES.cocks.race;
-    super(trajectory, direction, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits);
+    super(trajectory, forward, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits, defaults.hitbox, defaults.hitboxSize);
   }
 }
 
 export class TeleporterCock extends Cock {
-  constructor(trajectory, direction, layer, speedFactor) {
+  constructor(trajectory, forward, layer, speedFactor) {
     const defaults = VALUES.cocks.teleporter;
-    super(trajectory, direction, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits);
+    super(trajectory, forward, layer, speedFactor * defaults.speed, defaults.points[layer], defaults.type, defaults.hits, defaults.hitbox, defaults.hitboxSize);
   }
 }
 
@@ -127,37 +160,57 @@ export class Sinus extends Trajectory {
 }
 
 export class Teleportation extends Trajectory {
-  constructor(startY, startX, layer) {
+  constructor(startY, startX, layer, forward) {
     super(startY);
     this.x = startX;
+    this.y = startY;
     this.newX = startX;
     this.newY = startY;
     this.layer = layer;
-    this.pause = VALUES.cocks.teleporter.pause;
+    this.forward = forward;
+    this.pause = VALUES.cocks.teleporter.pause * (layer === 1 ? 1.5 : layer === 3 ? 1.2 : layer === 5 ? 0.9 : 0.5);
     this.travel = VALUES.cocks.teleporter.travel;
+    this.delta = 0;
     this.teleporting = false;
   }
 
   getPosition(x) {
-    const delta = Math.abs(this.x - x);
-    if (!this.teleporting && delta > this.pause) { // Start teleporting
-      this.newX = x + this.travel;
-      this.newY = Math.random() * 600 + 50
+    this.delta += Math.abs(this.x - x);
+    if (!this.teleporting && this.delta >= this.pause) { // Start teleporting
+      this.newX = this.newX + (this.forward ? 1 : -1) * this.delta + (this.forward ? 1 : -1) * this.travel;
+      this.newY = Math.random() * 800 + 50;
       this.teleporting = true;
     }
-    else if (this.teleporting && delta < this.pause + this.travel) { // Teleporting
+    else if (this.teleporting && this.delta < this.pause + this.travel) { // Teleporting
       return {
-        x: this.x + ((delta - this.travel) / this.travel) * (this.newX - this.x),
-        y: this.y + ((delta - this.travel) / this.travel) * (this.newY - this.y)
+        x: this.x + (this.forward ? 1 : -1) * ((this.delta - this.pause) / this.travel) * (Math.abs(this.newX - this.x)),
+        y: this.y + ((this.delta - this.pause) / this.travel) * (this.newY - this.y)
       };
     }
-    else if (delta >= this.pause + this.travel) {
+    else if (this.delta >= this.pause + this.travel) {
       this.x = this.newX;
       this.y = this.newY;
       this.teleporting = false;
+      this.delta = 0;
     }
     return {
       x: this.x,
+      y: this.y
+    };
+  }
+}
+
+export class Fall extends Trajectory {
+  constructor(startY, startX) {
+    super(startY);
+    this.startX = startX;
+    this.y = startY;
+  }
+
+  getPosition(x) {
+    this.y -= Math.abs(this.startX - x);
+    return {
+      x: this.startX,
       y: this.y
     };
   }
@@ -167,25 +220,29 @@ export class ShotPoint {
   constructor(x, y, points) {
     this.x = x;
     this.y = y;
-    this.points = points;
+    this.width = 100;
+    this.height = 40;
+    this.text = points.toString();
     this.visibleTime = VALUES.shotPointTime;
     this.time = VALUES.shotPointTime;
     this.alpha = 1;
   }
 
-  disappear(deltaTime) {
+  move(deltaTime) {
     this.time -= deltaTime;
-    this.alpha = this.time / this.visibleTime;
+    this.alpha = Math.max(0, this.time / this.visibleTime);
   }
 }
 
 export class SceneElement {
-  constructor(x, y, width, height, type) {
+  constructor(x, y, width, height, type, hitbox, hitboxSize) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
     this.type = type;
+    this.hitbox = hitbox;
+    this.hitboxSize = hitboxSize;
   }
 
   checkHit(x, y) {
@@ -196,27 +253,27 @@ export class SceneElement {
 export class Level2 extends SceneElement {
   constructor() {
     const defaults = VALUES.sceneElements[2];
-    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type);
+    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type, defaults.hitbox, defaults.hitboxSize);
   }
 }
 
 export class Level4 extends SceneElement {
   constructor() {
     const defaults = VALUES.sceneElements[4];
-    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type);
+    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type, defaults.hitbox, defaults.hitboxSize);
   }
 }
 
 export class Level6 extends SceneElement {
   constructor() {
     const defaults = VALUES.sceneElements[6];
-    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type);
+    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type, defaults.hitbox, defaults.hitboxSize);
   }
 }
 
 export class Level8 extends SceneElement {
   constructor() {
     const defaults = VALUES.sceneElements[8];
-    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type);
+    super(defaults.x, defaults.y, defaults.width, defaults.height, defaults.type, null, null);
   }
 }

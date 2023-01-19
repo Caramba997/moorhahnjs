@@ -131,6 +131,7 @@ export class AssetLoader {
       img.width = texture.imageWidth;
       img.height = texture.imageHeight;
       img.setAttribute('data-texture', texture.type);
+      if (texture.animation) img.setAttribute('data-animation', texture.animation);
       img.src = texture.src;
     }
     textureContainer.setAttribute('data-initialized', 'true');
