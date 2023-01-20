@@ -58,14 +58,17 @@ const locales = {
     classic: 'Klassisch',
     deluxe: 'Deluxe',
     fullscreen: 'Vollbild',
-    levelCompleteText: 'Die Zeit ist um. Gib deinen Namen ein um deinen Score in der Bestenliste zu speichern.',
+    levelCompleteText: 'Die Zeit ist um.',
     or: 'oder',
     name: 'Name',
     save: 'Speichern',
     saveSuccess: 'Speichern erfolgreich',
     saveError: 'Speichern fehlgeschlagen',
     reload: 'Nachladen',
-    reloadHint: 'Hinweis: Nachladen mit Leertaste.'
+    reloadHint: 'Hinweis: Nachladen mit Leertaste.',
+    newHighscore: 'Neuer Highscore! Platz',
+    newHighscoreSave: 'Gib deinen Namen ein um deinen Score in der Bestenliste zu speichern.',
+    noHighscore: 'Leider hast du es nicht auf die Bestenliste geschafft.'
   },
   EN: {
     undefined: '???',
@@ -81,7 +84,7 @@ const locales = {
     mainMenu: 'Main menu',
     gameOver: 'Game over',
     gameOverText: 'Do you want to try again?',
-    replay: 'Play again',
+    replay: 'Replay',
     pause: 'Pause',
     loading: 'Loading...',
     statusInit: 'Initialization',
@@ -126,14 +129,17 @@ const locales = {
     classic: 'Classic',
     deluxe: 'Deluxe',
     fullscreen: 'Fullscreen',
-    levelCompleteText: 'Time is up. Enter your name to save your score.',
+    levelCompleteText: 'Time is up.',
     or: 'or',
     name: 'Name',
     save: 'Save',
     saveSuccess: 'Successfully saved',
     saveError: 'Score could not be saved',
     reload: 'Reload',
-    reloadHint: 'Hint: Press space to reload.'
+    reloadHint: 'Hint: Press space to reload.',
+    newHighscore: 'New Highscore! Place',
+    newHighscoreSave: 'Enter your name to save your score.',
+    noHighscore: 'You did not reach a new highscore.'
   }
 }
 

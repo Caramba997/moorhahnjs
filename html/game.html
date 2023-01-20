@@ -54,10 +54,15 @@
             <div class="Popup__Content">
                 <p data-t="levelCompleteText"></p>
                 <p><span data-t="points"></span>: <span data-result="points"></span></p>
-                <div class="Container">
-                    <input class="mr-1" type="text" name="name" maxlength="12" placeholder="Name">
-                    <button class="Button__Primary" data-t="save" data-action="save-highscore"></button>
+                <div class="dn" data-highscore="true">
+                    <p data-highscore="text"><span data-t="newHighscore"></span> #<span data-highscore="place"></span></p>
+                    <p data-t="newHighscoreSave"></p>
+                    <div class="Container">
+                        <input class="mr-1" type="text" name="name" maxlength="12" placeholder="Name">
+                        <button class="Button__Primary" data-t="save" data-action="save-highscore"></button>
+                    </div>
                 </div>
+                <p class="dn" data-highscore="false" data-t="noHighscore"></p>
                 <div class="mt-1" data-result="save"></div>
                 <br>
                 <a class="Button__Primary" data-href="menu" data-t="backToStart"></a>

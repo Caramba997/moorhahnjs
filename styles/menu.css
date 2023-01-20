@@ -66,6 +66,7 @@ body {
 .Options__Row {
     display: flex;
     align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
     margin: 10px 0;
     gap: 10px;

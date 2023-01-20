@@ -23,6 +23,7 @@ export class Game {
 
   unload() {
     this.stop();
+    if (this.keyDownListener) window.removeEventListener('keydown', this.keyDownListener);
   }
 
   initNewGame() {
@@ -33,6 +34,7 @@ export class Game {
     this.reloadStart = 0;
     this.shotPoints = [];
     this.spawns = this.randomizer.createSpawnTimes(this.difficulty);
+    this.checksum = `${Date.now()}:`;
     this.crosshair = {
       x: Math.round(VALUES.view.width / 2),
       y: Math.round(VALUES.view.height / 2),
@@ -69,80 +71,35 @@ export class Game {
       this.crosshair.y = position.y;
     });
     // Shoot
-    const reloadButton = document.querySelector('.Reload');
-    canvas.addEventListener('click', (e) => {
-      if (this.ammo === 0) this.sounds.play('shotgun-empty');
-      if (this.ammo === 0 || this.reloading) return;
-      reloadButton.disabled = false;
-      this.ammo--;
-      this.sounds.play('shotgun');
-      const position = getCursorPosition(e);
-      let finished = false;
-      Object.entries(this.levels).forEach(([key, entries]) => {
-        if (finished) return;
-        const level = parseInt(key);
-        if (level === 8) {
-          finished = true;
-          return;
-        }
-        if (level % 2 === 0) {
-          entries.forEach((sceneElement) => {
-            if (finished) return;
-            if (this.checkHit(position, sceneElement)) {
-              finished = true;
-            }
-          });
-        }
-        else {
-          const shotPoints = [];
-          entries.forEach((cock) => {
-            if (!(cock instanceof Cock)) return;
-            if (cock.dead) return;
-            if (this.checkHit(position, cock)) {
-              cock.hit();
-              if (cock.dead) {
-                this.points += cock.points;
-                shotPoints.push(new ShotPoint(position.x, position.y, cock.points));
-              }
-            }
-          });
-          shotPoints.forEach((shot) => {
-            entries.push(shot);
-          });
-        }
-      });
+    this.reloadButton = document.querySelector('.Reload');
+    canvas.addEventListener('click', () => {
+      this.shoot();
     });
     // Reload
-    window.addEventListener('keydown', (e) => {
+    this.keyDownListener = (e) => {
       if (e.code === 'Space') {
-        if (!this.reloading && this.ammo < VALUES.ammo) {
-          this.reloading = true;
-          this.reloadStart = this.time;
-          reloadButton.disabled = true;
+        this.initiateReload();
+      }
+      else if (e.code === 'Escape') {
+        if (document.querySelector('[data-popup="start"]').getAttribute('data-visible') === 'false') {
+          this.openPopup('start');
+        }
+        else {
+          this.closePopup('start', true);
         }
       }
-    });
-    reloadButton.addEventListener('click', (e) => {
-      if (!this.reloading && this.ammo < VALUES.ammo) {
-        this.reloading = true;
-        this.reloadStart = this.time;
-        reloadButton.disabled = true;
-      }
+    };
+    window.addEventListener('keydown', this.keyDownListener);
+    this.reloadButton.addEventListener('click', () => {
+      this.initiateReload();
     });
   }
 
-  reload() {
-    if (!this.reloading) return;
-    if (this.reloadStart - this.time > VALUES.reloadTime) {
-      this.reloadStart -= VALUES.reloadTime;
-      this.ammo++;
-      if (this.ammo === VALUES.ammo) {
-        this.reloading = false;
-        this.sounds.play('shotgun-reload');
-      }
-      else {
-        this.sounds.play('shotgun-insert');
-      }
+  initiateReload() {
+    if (!this.reloading && this.ammo < VALUES.ammo) {
+      this.reloading = true;
+      this.reloadStart = this.time;
+      this.reloadButton.disabled = true;
     }
   }
 
@@ -198,7 +155,7 @@ export class Game {
       if (!nameInput.value) return;
       window.ps.save('name', nameInput.value);
       saveButton.classList.add('loading');
-      window.api.post('setHighscore', { difficulty: this.difficulty, gamemode: this.gamemode, points: this.points, username: nameInput.value }, (result) => {
+      window.api.post('setHighscore', { difficulty: this.difficulty, gamemode: this.gamemode, points: this.points, username: nameInput.value, checksum: this.checksum }, (result) => {
         resultElement.innerText = window.locales.getTranslation('saveSuccess');
         saveButton.classList.remove('loading');
         saveButton.disabled = true;
@@ -234,10 +191,6 @@ export class Game {
     if (doActions && name === 'start') this.start();
   }
 
-  processInput() {
-    
-  }
-
   processActions() {
     if (this.reloading) this.reload();
     if (this.spawns.length > 0) {
@@ -252,6 +205,65 @@ export class Game {
         cock.move(this.deltaTime);
       });
     });
+  }
+
+  shoot() {
+    if (this.ammo === 0) this.sounds.play('shotgun-empty');
+    if (this.ammo === 0 || this.reloading) return;
+    this.reloadButton.disabled = false;
+    this.ammo--;
+    this.sounds.play('shotgun');
+    const position = this.crosshair;
+    let finished = false;
+    Object.entries(this.levels).forEach(([key, entries]) => {
+      if (finished) return;
+      const level = parseInt(key);
+      if (level === 8) {
+        finished = true;
+        return;
+      }
+      if (level % 2 === 0) {
+        entries.forEach((sceneElement) => {
+          if (finished) return;
+          if (this.checkHit(position, sceneElement)) {
+            finished = true;
+          }
+        });
+      }
+      else {
+        const shotPoints = [];
+        entries.forEach((cock) => {
+          if (!(cock instanceof Cock)) return;
+          if (cock.dead) return;
+          if (this.checkHit(position, cock)) {
+            cock.hit();
+            if (cock.dead) {
+              this.points += cock.points;
+              this.checksum += `p${cock.points}`;
+              shotPoints.push(new ShotPoint(position.x, position.y, cock.points));
+            }
+          }
+        });
+        shotPoints.forEach((shot) => {
+          entries.push(shot);
+        });
+      }
+    });
+  }
+
+  reload() {
+    if (!this.reloading) return;
+    if (this.reloadStart - this.time > VALUES.reloadTime) {
+      this.reloadStart -= VALUES.reloadTime;
+      this.ammo++;
+      if (this.ammo === VALUES.ammo) {
+        this.reloading = false;
+        this.sounds.play('shotgun-reload');
+      }
+      else {
+        this.sounds.play('shotgun-insert');
+      }
+    }
   }
 
   checkHit(point, prop) {
@@ -381,8 +393,11 @@ export class Game {
 
   gameOver() {
     this.render();
-    document.querySelector('[data-result="points"]').innerText = this.points;
-    this.openPopup('game-over');
+    const popupContent = document.querySelector('[data-popup="game-over"] .Popup__Content'),
+          newHighscoreElement = popupContent.querySelector('[data-highscore="true"]'),
+          noHighscoreElement = popupContent.querySelector('[data-highscore="false"]');
+    popupContent.classList.add('loading');
+    popupContent.querySelector('[data-result="points"]').innerText = this.points;
     const saveButton = document.querySelector('[data-action="save-highscore"]'),
           nameInput = document.querySelector('input[name="name"]'),
           resultElement = document.querySelector('[data-result="save"]');
@@ -396,6 +411,26 @@ export class Game {
       saveButton.disabled = true;
     }
     this.sounds.stop(this.music);
+    this.openPopup('game-over');
+    window.api.post('checkScore', { difficulty: this.difficulty, gamemode: this.gamemode, points: this.points, username: nameInput.value }, (result) => {
+      if (result.highscore === true) {
+        newHighscoreElement.querySelector('[data-highscore="place"]').innerText = result.place;
+        newHighscoreElement.querySelector('[data-highscore="text"]').classList.remove('dn');
+        newHighscoreElement.classList.remove('dn');
+        noHighscoreElement.classList.add('dn');
+      }
+      else {
+        newHighscoreElement.classList.add('dn');
+        noHighscoreElement.classList.remove('dn');
+      }
+      popupContent.classList.remove('loading');
+    }, (error) => {
+      console.error(error);
+      newHighscoreElement.querySelector('[data-highscore="text"]').classList.add('dn');
+      newHighscoreElement.classList.add('dn');
+      noHighscoreElement.classList.add('dn');
+      popupContent.classList.remove('loading');
+    });
   }
 
   loop() {
@@ -405,8 +440,6 @@ export class Game {
     this.deltaTime = this.newTime - this.oldTime;
     this.oldTime = this.newTime;
     this.time -= this.deltaTime;
-    this.processInput();
-    if (!this.running) return;
     this.processActions();
     if (!this.running) return;
     this.garbageCollection();
@@ -465,7 +498,7 @@ class Randomizer {
     const layers = [1, 3, 5, 7],
           layer = layers[Math.floor(Math.random() * layers.length)],
           forward = Math.random() * 2 >= 1,
-          startY = Math.round(Math.random() * 825) + 75,
+          startY = Math.round(Math.random() * 825) + 75 + (layer >= 5 ? 150 : 0),
           difficultySpeedFactor = difficulty === 'easy' ? 1 : difficulty === 'normal' ? 2 : difficulty === 'hard' ? 3 : 4,
           layerSpeedFactor = layer === 1 ? 2 : layer === 3 ? 1.7 : layer === 5 ? 1.3 : 1,
           speedFactor = (1 + (Math.random() / 2) - 0.25) * difficultySpeedFactor * layerSpeedFactor,

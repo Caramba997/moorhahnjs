@@ -21,7 +21,7 @@ export const VALUES = {
       type: 'cock-egg',
       trajectories: ['parabola', 'sinus'],
       points: {
-        1: 20,
+        1: 15,
         3: 25,
         5: 30,
         7: 35
@@ -49,10 +49,10 @@ export const VALUES = {
       type: 'cock-race',
       trajectories: ['trajectory'],
       points: {
-        1: 20,
-        3: 30,
-        5: 40,
-        7: 50
+        1: 25,
+        3: 35,
+        5: 45,
+        7: 60
       },
       speed: 500,
       hits: 1,
@@ -64,10 +64,10 @@ export const VALUES = {
       type: 'cock-teleporter',
       trajectories: ['teleportation'],
       points: {
-        1: 10,
-        3: 15,
-        5: 20,
-        7: 25
+        1: 15,
+        3: 25,
+        5: 30,
+        7: 35
       },
       speed: 100,
       pause: 300,
