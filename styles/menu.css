@@ -1,19 +1,13 @@
-:root {
-    --page-margin: 50px;
-}
-
 html {
     color: white;
 }
-body {
-    margin: var(--page-margin);
-}
 
 #content {
-    height: calc(100vh - 2 * var(--page-margin));
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
+    height: 100dvh;
 }
 .Logo {
     position: relative;

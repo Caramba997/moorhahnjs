@@ -6,7 +6,7 @@ body {
 
 .Game {
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     display: flex;
 }
 .Game__Container {
@@ -21,7 +21,7 @@ body {
 #canvas {
     margin: auto;
     max-width: calc(100vw - 10px);
-    max-height: calc(100vh - 10px);
+    max-height: calc(100dvh - 10px);
     border-radius: 5px;
     cursor: none;
 }

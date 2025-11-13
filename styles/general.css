@@ -66,6 +66,11 @@
 html {
     font-size: var(--base-font-size);
 }
+body {
+    height: 100vh;
+    background-color: black;
+    margin: 0;
+}
 @media only screen and (max-width: 999px) {
     html {
         font-size: var(--mobile-font-size);
@@ -135,13 +140,18 @@ input::placeholder {
     margin-right: 1rem;
 }
 
+/* Padding */
+.px-1 {
+    padding: 1rem;
+}
+
 /* Popups */
 .PageOverlay {
     position: fixed;
     left: 0;
     top: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     background: var(--color-overlay);
     z-index: 5;
 }
@@ -180,7 +190,7 @@ input::placeholder {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     z-index: 100;
     background: black;
 }
@@ -256,7 +266,7 @@ input::placeholder {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     z-index: -1;
     background-image: url(/images/Background.png);
     background-repeat: no-repeat;
